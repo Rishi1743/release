@@ -1,4 +1,4 @@
-name: Build Miatoll Kernel with SUSFS
+name: Build My Local Patched Kernel
 on:
   workflow_dispatch:
 
@@ -6,30 +6,28 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
+    - name: Checkout My Pre-Patched Code
+      uses: actions/checkout@v4
+
     - name: Set up Environment Dependencies
       run: |
-        sudo apt-get clean
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git texinfo
 
-    - name: Clone Toolchain & Source
+    - name: Set up SUSFS Source Elements
       run: |
-        git clone --depth=1 https://github.com/One4Lots/kernel_xiaomi_sm6250.git kernel
-        # Fix applied here: directly cloning the 4.14 branch
         git clone -b kernel-4.14 --depth=1 https://gitlab.com/simonpunk/SUSFS4KSU.git susfs
+        # Manually copy over the structured files directly into the tree
+        cp -r susfs/kernel_patches/fs/* ./fs/ || true
+        cp -r susfs/kernel_patches/include/linux/* ./include/linux/ || true
         
-    - name: Patch SUSFS
+    - name: Inject SUSFS Config Configurations
       run: |
-        cd kernel
-        # We drop the checkout step since the correct branch is already cloned
-        cp -r ../susfs/kernel_patches/fs/ ./fs/
-        cp -r ../susfs/kernel_patches/include/linux/ ./include/linux/
-        patch -p1 < ../susfs/kernel_patches/50_add_susfs_in_kernel-4.14.patch
+        # Ensure the SUSFS configuration flag is cleanly appended to the configuration layout
         echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/miatoll_defconfig
 
     - name: Compile Kernel Binary
       run: |
-        cd kernel
         git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git gcc
         export PATH=$(pwd)/gcc/bin:$PATH
         make O=out arch/arm64/configs/miatoll_defconfig
@@ -39,4 +37,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Miatoll-SUSFS-Kernel
-        path: kernel/out/arch/arm64/boot/Image.gz-dtb
+        path: out/arch/arm64/boot/Image.gz-dtb
