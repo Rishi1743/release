@@ -1,0 +1,42 @@
+name: Build Kernel with SUSFS
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Environment Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential ccache flex glibc-source libelf-dev libssl-dev libxml2-utils lz4 openjdk-11-jdk textinfo unzip zlib1g-dev git
+
+    - name: Clone Toolchain & Source
+      run: |
+        git clone --depth=1 https://github.com/One4Lots/kernel_xiaomi_sm6250.git kernel
+        git clone --depth=1 https://gitlab.com/simonpunk/SUSFS4KSU.git susfs
+        
+    - name: Patch SUSFS
+      run: |
+        cd susfs
+        git checkout kernel-4.14
+        cd ../kernel
+        cp -r ../susfs/kernel_patches/fs/ ./fs/
+        cp -r ../susfs/kernel_patches/include/linux/ ./include/linux/
+        patch -p1 < ../susfs/kernel_patches/50_add_susfs_in_kernel-4.14.patch
+        echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/miatoll_defconfig
+
+    - name: Compile Kernel Binary
+      run: |
+        cd kernel
+        # Automatically pull a standard Android Clang toolchain to compile
+        git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git gcc
+        export PATH=$(pwd)/gcc/bin:$PATH
+        make O=out arch/arm64/configs/miatoll_defconfig
+        make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-elf-
+
+    - name: Upload Flashable Output
+      uses: actions/upload-artifact@v4
+      with:
+        name: Miatoll-SUSFS-Kernel
+        path: kernel/out/arch/arm64/boot/Image.gz-dtb
