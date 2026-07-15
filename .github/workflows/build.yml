@@ -9,7 +9,7 @@ jobs:
     - name: Set up Environment Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git
+        sudo apt-get install -y bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git textinfo
 
     - name: Clone Toolchain & Source
       run: |
