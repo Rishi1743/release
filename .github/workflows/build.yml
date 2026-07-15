@@ -9,7 +9,7 @@ jobs:
     - name: Set up Environment Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache flex glibc-source libelf-dev libssl-dev libxml2-utils lz4 openjdk-11-jdk textinfo unzip zlib1g-dev git
+        sudo apt-get install -y bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git
 
     - name: Clone Toolchain & Source
       run: |
@@ -29,7 +29,6 @@ jobs:
     - name: Compile Kernel Binary
       run: |
         cd kernel
-        # Automatically pull a standard Android Clang toolchain to compile
         git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git gcc
         export PATH=$(pwd)/gcc/bin:$PATH
         make O=out arch/arm64/configs/miatoll_defconfig
