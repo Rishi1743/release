@@ -1,15 +1,16 @@
-name: Build Kernel with SUSFS
+name: Build Miatoll Kernel with SUSFS
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Set up Environment Dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git textinfo
+        sudo apt-get clean
+        sudo apt-get update --error-on=any
+        sudo apt-get install -y --fix-missing bc bison build-essential ccache flex libelf-dev libssl-dev libxml2-utils lz4 unzip git texinfo
 
     - name: Clone Toolchain & Source
       run: |
